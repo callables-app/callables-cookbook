@@ -1,0 +1,1 @@
+# Your automation's dependencies go here. The shipfn SDK is installed by the platform.
