@@ -1,1 +1,1 @@
-# Your automation's dependencies go here. The shipfn SDK is installed by the platform.
+# Your automation's dependencies go here. The Callables SDK is installed by the platform.

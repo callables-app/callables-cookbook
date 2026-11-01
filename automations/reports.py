@@ -3,12 +3,12 @@ import time
 from datetime import date, timedelta
 from typing import Literal
 
-from shipfn import deploy
+from callables import deploy
 
 
 @deploy(title="Hello", description="Says hello. The smallest possible automation.")
 def hello(name: str = "world") -> str:
-    return f"# Hello, {name}!\n\nThis ran in a Shipfn sandbox."
+    return f"# Hello, {name}!\n\nThis ran in a Callables sandbox."
 
 
 @deploy(
