@@ -7,6 +7,7 @@ Each top-level folder is a topic and deploys as its own Callables project, with 
 | Folder | Topic |
 |---|---|
 | [`email/`](email/) | Parsing inboxes and attachments, starting with Outlook |
+| [`gmail/`](gmail/) | Your own Gmail inbox: summaries, top senders, bulk archive. Shows connections, where each person uses their own account |
 | [`salesforce/`](salesforce/) | Salesforce automations |
 
 ## Deploy a topic
