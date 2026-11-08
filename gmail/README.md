@@ -7,6 +7,8 @@ Automations that work on the inbox of **whoever runs them**. Each person connect
 | **Summarize my inbox** | Statistics for your inbox: totals and unread now, then the last N days by tab, by day and by sender |
 | **Recent senders** | Who has emailed you most lately, with unread counts. Each row offers **Archive their emails** |
 | **Archive emails from a sender** | Archives every inbox email from one address. Dry run is on by default, so you see what would move first |
+| **Subscriptions** | Mailing lists that emailed you in the last N days (found by their `List-Unsubscribe` header), busiest first, with how much you read. Each row offers **Unsubscribe** |
+| **Unsubscribe** | Leaves a list the best way it supports: one-click (RFC 8058), else an unsubscribe email sent from your Gmail, else the link for you to open. Then optionally archives or trashes everything it sent you |
 
 The connection is declared once in `inbox.py` and shared by the whole group:
 
