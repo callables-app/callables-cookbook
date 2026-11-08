@@ -24,6 +24,7 @@ class Message:
     snippet: str
     received: datetime
     unread: bool
+    labels: list[str]
 
 
 class Gmail:
@@ -37,8 +38,8 @@ class Gmail:
             raise RuntimeError("Google didn't accept your access. Reconnect Google and run this again.")
         if resp.status_code == 403:
             reason = resp.json().get("error", {}).get("message", "") if resp.content else ""
-            raise RuntimeError(f"Google refused this request: {reason or 'permission denied'}. If the project just "
-                               "added a permission, reconnect Google.")
+            raise RuntimeError(f"Google refused this request: {reason.rstrip('.') or 'permission denied'}. Disconnect "
+                               "Google under Connections, connect again, and tick the Gmail box on Google's screen.")
         resp.raise_for_status()
         return resp.json() if resp.content else {}
 
@@ -70,7 +71,12 @@ class Gmail:
             snippet=data.get("snippet", ""),
             received=datetime.fromtimestamp(int(data.get("internalDate", 0)) / 1000, tz=timezone.utc),
             unread="UNREAD" in data.get("labelIds", []),
+            labels=data.get("labelIds", []),
         )
+
+    def label(self, label_id: str) -> dict:
+        """A label's counts: messagesTotal, messagesUnread, threadsTotal, threadsUnread."""
+        return self._call("GET", f"/labels/{label_id}")
 
     def messages(self, ids: list[str]) -> list[Message]:
         """Sender, subject and snippet for each id, fetched a few at a time. Keeps the given order."""

@@ -14,7 +14,7 @@ Each top-level folder is a topic and deploys as its own Callables project, with 
 
 1. Fork this repo.
 2. In Callables, open **New project** and pick your fork.
-3. Set **Folder** to the topic, such as `email`.
+3. Set **Folder** to the topic, such as `email`. If you forget, change it on the project page afterwards.
 4. Set the secrets listed in that folder's README.
 
 ## Run one locally

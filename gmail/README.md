@@ -4,7 +4,7 @@ Automations that work on the inbox of **whoever runs them**. Each person connect
 
 | Callable | What it does |
 |---|---|
-| **Summarize my inbox** | A short written digest of recent mail: what needs you, what's worth knowing, what's noise |
+| **Summarize my inbox** | Statistics for your inbox: totals and unread now, then the last N days by tab, by day and by sender |
 | **Recent senders** | Who has emailed you most lately, with unread counts. Each row offers **Archive their emails** |
 | **Archive emails from a sender** | Archives every inbox email from one address. Dry run is on by default, so you see what would move first |
 
@@ -32,7 +32,6 @@ gmail = Group("gmail", title="Gmail", connections=[google])
 
 1. In Callables, open **New project**, pick your fork of this repo, and set **Folder** to `gmail`.
 2. In the project's secrets, set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` from step 1.
-3. Optional: set `ANTHROPIC_API_KEY` so **Summarize my inbox** writes a summary with Claude. Without it, you get the messages grouped by sender.
 
 ### 3. Connect and run
 
@@ -43,7 +42,6 @@ Open **Summarize my inbox**. It asks you to **Connect Google**, sends you to Goo
 Get an access token for your own account, for example from Google's [OAuth Playground](https://developers.google.com/oauthplayground/) with the `gmail.modify` scope, and put it in `gmail/.env`:
 
     GOOGLE_ACCESS_TOKEN=ya29....
-    ANTHROPIC_API_KEY=sk-ant-...
 
 Then:
 
