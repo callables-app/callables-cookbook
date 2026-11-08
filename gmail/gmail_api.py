@@ -1,7 +1,11 @@
 """A small Gmail REST client: just what the inbox callables need. Every call uses the access token for the person
 running the callable, so it only ever sees their own mailbox."""
 import base64
+import random
 import re
+import threading
+import time
+from collections import deque
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -14,6 +18,10 @@ import requests
 API = "https://gmail.googleapis.com/gmail/v1/users/me"
 # batchModify takes up to 1000 ids per call
 BATCH = 1000
+# Gmail charges each call in quota units and caps each user at 15,000 a minute. Stay under it with room to spare,
+# since other runs or apps may be using the same mailbox.
+UNITS_PER_MINUTE = 10_000
+RETRIES = 6
 # A plain address, so a sender can't smuggle extra search operators into the Gmail query
 ADDRESS = re.compile(r"^[A-Za-z0-9._%+'-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
 
@@ -31,21 +39,75 @@ class Message:
     headers: dict[str, str] = field(default_factory=dict)  # lower-cased names; only the ones asked for
 
 
+def _cost(method: str, path: str) -> int:
+    """Gmail's quota units for a call (developers.google.com/workspace/gmail/api/reference/quota)."""
+    if path == "/messages/send":
+        return 100
+    if path == "/messages/batchModify":
+        return 50
+    if path.startswith("/labels/"):
+        return 1
+    return 5  # messages.list, messages.get, messages.trash
+
+
+def _error(resp: requests.Response) -> tuple[str, str]:
+    """(reason, message) from a Google API error body."""
+    try:
+        error = resp.json().get("error", {})
+    except ValueError:
+        return "", resp.text[:200]
+    reasons = [e.get("reason", "") for e in error.get("errors", [])] + [
+        d.get("reason", "") for d in error.get("details", []) if isinstance(d, dict)]
+    return " ".join(r for r in reasons if r), error.get("message", "")
+
+
 class Gmail:
     def __init__(self, token: str):
         self.http = requests.Session()
         self.http.headers["Authorization"] = f"Bearer {token}"
+        self._spent: deque[tuple[float, int]] = deque()  # (when, units) for the last minute
+        self._lock = threading.Lock()
+
+    def _pace(self, units: int) -> None:
+        """Wait until spending `units` keeps the last minute under budget. Shared by the worker threads."""
+        while True:
+            with self._lock:
+                now = time.monotonic()
+                while self._spent and now - self._spent[0][0] > 60:
+                    self._spent.popleft()
+                if sum(u for _, u in self._spent) + units <= UNITS_PER_MINUTE:
+                    self._spent.append((now, units))
+                    return
+                wait = 60 - (now - self._spent[0][0]) + 0.05
+            time.sleep(wait)
 
     def _call(self, method: str, path: str, **kwargs) -> dict:
-        resp = self.http.request(method, f"{API}{path}", timeout=30, **kwargs)
-        if resp.status_code == 401:
-            raise RuntimeError("Google didn't accept your access. Reconnect Google and run this again.")
-        if resp.status_code == 403:
-            reason = resp.json().get("error", {}).get("message", "") if resp.content else ""
-            raise RuntimeError(f"Google refused this request: {reason.rstrip('.') or 'permission denied'}. Disconnect "
-                               "Google under Connections, connect again, and tick the Gmail box on Google's screen.")
-        resp.raise_for_status()
-        return resp.json() if resp.content else {}
+        for attempt in range(RETRIES):
+            self._pace(_cost(method, path))
+            resp = self.http.request(method, f"{API}{path}", timeout=30, **kwargs)
+            if resp.status_code == 401:
+                raise RuntimeError("Google didn't accept your access. Reconnect Google and run this again.")
+            if resp.status_code in (403, 429):
+                reason, message = _error(resp)
+                limited = resp.status_code == 429 or "ratelimit" in reason.lower() or "quota" in (reason + message).lower()
+                if limited and attempt < RETRIES - 1:
+                    # Gmail asks to slow down: back off, longer each time, as Google recommends
+                    retry_after = resp.headers.get("Retry-After", "")
+                    time.sleep(float(retry_after) if retry_after.isdigit() else min(60, 2 ** attempt + random.random()))
+                    continue
+                if limited:
+                    raise RuntimeError("Gmail's rate limit for your account was hit and didn't clear after waiting. "
+                                       "Wait a minute and run it again, or use a shorter time range.")
+                if "insufficient" in (reason + message).lower():
+                    raise RuntimeError("Your Google connection doesn't include Gmail access. Disconnect Google under "
+                                       "Connections, connect again, and tick the Gmail box on Google's screen.")
+                raise RuntimeError(f"Google refused this request: {message.rstrip('.') or 'permission denied'}.")
+            if resp.status_code >= 500 and attempt < RETRIES - 1:
+                time.sleep(min(30, 2 ** attempt + random.random()))
+                continue
+            resp.raise_for_status()
+            return resp.json() if resp.content else {}
+        raise RuntimeError("Gmail kept failing. Try again in a minute.")
 
     def search(self, query: str, limit: int) -> list[str]:
         """Message ids matching a Gmail search (the same syntax as the search box), newest first."""
