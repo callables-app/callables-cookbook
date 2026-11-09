@@ -1,6 +1,6 @@
 # Gmail
 
-Automations that work on the inbox of **whoever runs them**. Each person connects their own Google account once, and every run they start reads and changes only their own mail. It's the example for [connections](https://callables.app/docs/connections).
+Automations that work on the inbox of **whoever runs them** (for Microsoft 365, see [outlook/](../outlook/)). Each person connects their own Google account once, and every run they start reads and changes only their own mail. It's the example for [connections](https://callables.app/docs/connections).
 
 | Callable | What it does |
 |---|---|
@@ -21,14 +21,14 @@ gmail = Group("gmail", title="Gmail", connections=[google])
 
 ### 1. Create the Google OAuth app (once)
 
-1. In the [Google Cloud console](https://console.cloud.google.com/), create or pick a project.
-2. **APIs & Services → Library**: enable the **Gmail API**.
-3. **APIs & Services → OAuth consent screen**: choose **Internal** if you're on Google Workspace and only your organization will use it. Otherwise choose **External**, and add yourself and your testers under **Test users**.
-4. Add the scope `https://www.googleapis.com/auth/gmail.modify` (plus `openid` and `email`, which show which account people connected).
-5. **APIs & Services → Credentials → Create credentials → OAuth client ID**, type **Web application**. Under **Authorized redirect URIs**, add the URI shown on the project page's **Connections** card: `https://callables.app/connections/callback` in production, or `http://localhost:3000/connections/callback` for a local Callables.
-6. Copy the client ID and client secret.
+Follow [How to create a Google OAuth app for your Python automations](https://callables.app/blog/create-a-google-oauth-app). In short:
 
-`gmail.modify` is a restricted scope. While an External app is in **Testing** status, Google expires its refresh tokens after 7 days, so people have to reconnect weekly. An **Internal** app doesn't have that limit.
+1. In the [Google Cloud console](https://console.cloud.google.com/), create a project and enable the **Gmail API**.
+2. In **Google Auth Platform**, choose the audience: **Internal** if you're on Google Workspace and only your organization will use it. Otherwise **External**, with yourself and your testers as **Test users**.
+3. Add the scope `gmail.modify`.
+4. Create a **Web application** client with the redirect URI `https://callables.app/connections/callback`, and copy the client ID and secret.
+
+`gmail.modify` is a restricted scope. While an External app is in **Testing**, Google expires sign-ins after 7 days, so people have to reconnect weekly. An **Internal** app doesn't have that limit.
 
 ### 2. Deploy the folder
 

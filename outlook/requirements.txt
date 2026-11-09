@@ -1,0 +1,2 @@
+# The Callables SDK is installed by the platform; don't list it here.
+requests>=2.32
