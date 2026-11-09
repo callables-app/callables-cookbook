@@ -41,15 +41,18 @@ Open **Summarize my inbox**. It asks you to **Connect Google**, sends you to Goo
 
 ## Run locally
 
-Get an access token for your own account, for example from Google's [OAuth Playground](https://developers.google.com/oauthplayground/) with the `gmail.modify` scope, and put it in `gmail/.env`:
+1. In the OAuth client from step 1, add a second redirect URI: `http://localhost:8765/callback`.
+2. Put the client ID and secret in `gmail/.env` (it's ignored by git):
 
-    GOOGLE_ACCESS_TOKEN=ya29....
+       GOOGLE_CLIENT_ID=...apps.googleusercontent.com
+       GOOGLE_CLIENT_SECRET=...
 
-Then:
+3. Sign in once, then run anything:
 
-    pip install callables
-    pip install -r gmail/requirements.txt
-    call local --root gmail gmail.recent_senders -i days=3
-    call local --root gmail gmail.archive_from_sender -i sender=news@example.com
+       cd gmail
+       pip install callables -r requirements.txt
+       call connect
+       call gmail recent_senders --days 3
+       call gmail subscriptions
 
-Playground tokens last an hour.
+`call connect` lists the connections this folder needs and whether you're connected, then opens Google's sign-in for the one you pick (tick every box). It keeps the tokens in your user config folder and refreshes them, so you don't sign in again. `call disconnect` forgets them.
