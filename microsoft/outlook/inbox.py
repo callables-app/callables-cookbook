@@ -4,7 +4,7 @@ from collections import Counter
 from datetime import datetime, timedelta, timezone
 
 from callables import Connection, Group, Next, Secret
-from graph_api import Graph, from_sender, since
+from microsoft.outlook.graph_api import Graph, from_sender, since
 
 # The app's details come from project secrets (and .env locally), never from code. MS_TENANT_ID is your
 # Directory (tenant) ID, or "common" for a multi-tenant app.

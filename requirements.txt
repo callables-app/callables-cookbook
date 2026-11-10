@@ -1,2 +1,3 @@
+# The whole cookbook deploys as one project, so every folder shares these.
 # The Callables SDK is installed by the platform; don't list it here.
 requests>=2.32

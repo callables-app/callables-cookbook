@@ -5,8 +5,8 @@ from typing import Literal
 import requests
 
 from callables import Next
-from gmail_api import Gmail, Message, check_address, parse_mailto, unsubscribe_options
-from inbox import archive_from_sender, gmail, google
+from google.gmail.gmail_api import Gmail, Message, check_address, parse_mailto, unsubscribe_options
+from google.gmail.inbox import archive_from_sender, gmail, google
 
 LIST_HEADERS = ("List-Unsubscribe", "List-Unsubscribe-Post", "List-Id")
 SCAN_LIMIT = 2000

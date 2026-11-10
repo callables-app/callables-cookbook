@@ -2,24 +2,39 @@
 
 Complete, working automations for [Callables](https://callables.app). Each one solves a real problem and is written up in a guide.
 
-Each top-level folder is a topic and deploys as its own Callables project, with its own `requirements.txt` and secrets.
+The whole cookbook deploys as **one project**. Folders are grouped by vendor and product. Each folder has single-platform automations, and `recipes/` holds jobs that cross platforms. Recipes import the same API clients the product folders use, so nothing is copied, and next actions can hand off from one platform to another.
 
-| Folder | Topic |
+| Folder | What's in it |
 |---|---|
-| [`email/`](email/) | Parsing inboxes and attachments, starting with Outlook |
-| [`gmail/`](gmail/) | Your own Gmail inbox: summaries, top senders, bulk archive, subscriptions and unsubscribe. Shows connections, where each person uses their own account |
-| [`outlook/`](outlook/) | The same automations for your own Outlook (Microsoft 365) mailbox, on Microsoft Graph |
-| [`salesforce/`](salesforce/) | Salesforce automations |
+| [`google/gmail/`](google/gmail/) | Your own Gmail inbox: summaries, top senders, bulk archive, subscriptions and unsubscribe. Each person uses their own account |
+| [`google/drive/`](google/drive/) | Google Drive automations (coming) |
+| [`microsoft/outlook/`](microsoft/outlook/) | The Gmail automations for your own Outlook (Microsoft 365) mailbox, plus exporting attachments as a zip per thread |
+| [`microsoft/teams/`](microsoft/teams/) | Microsoft Teams automations (coming) |
+| [`salesforce/`](salesforce/) | Salesforce automations (coming) |
+| [`recipes/`](recipes/) | Jobs across platforms, such as receipts from your inbox into your accounting (coming) |
 
-## Deploy a topic
+## Layout
+
+    google/gmail/gmail_api.py        an API client: no callables in it, so any folder can import it
+    google/gmail/inbox.py            callables, plus the Gmail connection and group
+    microsoft/outlook/graph_api.py
+    microsoft/outlook/inbox.py
+    recipes/<job>.py                 imports from google/ and microsoft/ as it needs
+    requirements.txt                 one list for everything
+
+Import across folders by path: `from google.gmail.gmail_api import Gmail`. Each connection is defined once and imported where it's needed.
+
+## Deploy it
 
 1. Fork this repo.
-2. In Callables, open **New project** and pick your fork.
-3. Set **Folder** to the topic, such as `email`. If you forget, change it on the project page afterwards.
-4. Set the secrets listed in that folder's README.
+2. In Callables, open **New project**, pick your fork, and leave **Folder** empty.
+3. Set the secrets for the connections you want to use, listed in each folder's README.
 
 ## Run one locally
 
-    pip install callables
-    pip install -r email/requirements.txt
-    call local --root email <function_name>
+    pip install callables -r requirements.txt
+    call check                          # every callable loads, and what each connection needs
+    call connect outlook                # once per connection, with its secrets in .env
+    call outlook export_attachments --count 50
+
+Run `call check` before you push: the build imports every file, so a broken one stops the whole deploy.

@@ -3,7 +3,7 @@ from collections import Counter
 from datetime import datetime, timedelta, timezone
 
 from callables import Connection, Group, Next
-from gmail_api import Gmail, check_address
+from google.gmail.gmail_api import Gmail, check_address
 
 google = Connection("google", provider="google", scopes=["gmail.modify"])
 

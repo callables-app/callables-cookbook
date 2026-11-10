@@ -1,6 +1,6 @@
 # Outlook
 
-The [Gmail](../gmail/) automations, for Microsoft 365. They work on the mailbox of **whoever runs them**: each person connects their own work account once, and every run they start reads and changes only their own mail, through Microsoft Graph. It's an example of [connections](https://callables.app/docs/connections).
+The [Gmail](../../google/gmail/) automations, for Microsoft 365. They work on the mailbox of **whoever runs them**: each person connects their own work account once, and every run they start reads and changes only their own mail, through Microsoft Graph. It's an example of [connections](https://callables.app/docs/connections).
 
 | Callable | What it does |
 |---|---|
@@ -8,6 +8,7 @@ The [Gmail](../gmail/) automations, for Microsoft 365. They work on the mailbox 
 | **Recent senders** | Who has emailed you most lately, with unread counts. Each row offers **Archive their emails** |
 | **Archive emails from a sender** | Moves every inbox email from one address to Archive. Dry run is on by default, so you see what would move first |
 | **Subscriptions** | Mailing lists that emailed you in the last N days (found by their `List-Unsubscribe` header), busiest first, with how much you read. Each row offers **Unsubscribe** |
+| **Export attachments by thread** | The attachments from your newest N inbox emails, as a zip per thread, named after the thread's subject without `RE:` and `Fwd:`. Characters that can't go in a file name are stripped and long names are cut short. A file attached again further down a thread goes in once; two threads with the same subject get `(2)`, `(3)` |
 | **Unsubscribe** | Leaves a list the best way it supports: one-click (RFC 8058), else an unsubscribe email sent from your mailbox, else the link for you to open. Then optionally archives everything it sent you, or moves it to Deleted Items |
 
 The connection is declared once in `inbox.py` and shared by the whole group:
@@ -30,16 +31,16 @@ mail = Group("outlook", title="Outlook", connections=[outlook])
 
 ### 1. Register the Microsoft app (once)
 
-Follow [How to create a Microsoft OAuth app for Outlook automations](https://callables.app/blog/create-a-microsoft-oauth-app). In short:
+Follow the [Microsoft connector guide](https://callables.app/connectors/microsoft). In short:
 
 1. In [Microsoft Entra](https://entra.microsoft.com), open **Entra ID → App registrations → New registration**. Choose **Single tenant**, and add the redirect URI `https://callables.app/connections/callback` (platform **Web**).
 2. **Certificates & secrets**: create a client secret and copy its **Value** (not the Secret ID).
 3. **API permissions**: add the Microsoft Graph **delegated** permissions `Mail.ReadWrite` and `Mail.Send`.
 4. Have an admin click **Grant admin consent** for your organization, so people can connect without being blocked.
 
-### 2. Deploy the folder
+### 2. Deploy the cookbook
 
-1. In Callables, open **New project**, pick your fork of this repo, and set **Folder** to `outlook`.
+1. In Callables, open **New project** and pick your fork of this repo. Leave **Folder** empty: the whole cookbook is one project.
 2. In the project's secrets, set:
 
    | Secret | From the app's Overview page |
@@ -50,22 +51,23 @@ Follow [How to create a Microsoft OAuth app for Outlook automations](https://cal
 
 ### 3. Connect and run
 
-Open **Summarize my inbox**. It asks you to **Connect Microsoft**, sends you to Microsoft's sign-in, and brings you back. After that every callable in the project runs on your mailbox. Teammates you share it with connect their own accounts.
+Open **Summarize my inbox**. It asks you to **Connect Microsoft**, sends you to Microsoft's sign-in, and brings you back. After that every Outlook callable runs on your mailbox. Teammates you share it with connect their own accounts.
 
 ## Run locally
 
 1. In the app registration, under **Authentication**, add a second Web redirect URI: `http://localhost:8765/callback`.
-2. Put the three secrets in `outlook/.env` (it's ignored by git), or in a `.env` at the top of the repo.
+2. Put the three secrets in `.env` at the top of the repo (it's ignored by git).
 3. Sign in once, then run anything:
 
-       cd outlook
        pip install callables -r requirements.txt
-       call connect
+       call connect outlook
        call outlook recent_senders --days 3
        call outlook subscriptions
+       call outlook export_attachments --count 50
 
 ## Good to know
 
 - **Archive** is Outlook's Archive folder. **Deleted Items** is emptied on your organization's schedule.
 - Graph allows 4 requests at once and about 10,000 per 10 minutes for each mailbox. The client in `graph_api.py` stays under both, batches moves 20 at a time, and waits when Outlook asks it to.
 - Subscriptions reads up to 2,000 messages from every folder except Sent Items, Drafts, Deleted Items and Junk Email.
+- **Export attachments by thread** hands back up to 20 zips and 100 MB per run, newest threads first. If there's more, it says in the run's logs how many threads were left out: export fewer emails to get them. Inline images (such as signature logos) aren't attachments, so they're skipped.

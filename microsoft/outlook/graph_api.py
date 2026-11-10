@@ -23,7 +23,7 @@ RETRIES = 6
 PAGE = 100
 # A plain address, so a sender can't change the shape of an OData filter
 ADDRESS = re.compile(r"^[A-Za-z0-9._%+'-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
-FIELDS = "id,from,subject,receivedDateTime,isRead,parentFolderId,importance,flag,inferenceClassification,hasAttachments"
+FIELDS = "id,from,subject,receivedDateTime,isRead,parentFolderId,importance,flag,inferenceClassification,hasAttachments,conversationId"
 # Mail that isn't really "received": what you sent, drafts, and what's already deleted or junk
 SKIP_FOLDERS = ("sentitems", "drafts", "deleteditems", "junkemail")
 
@@ -41,6 +41,7 @@ class Message:
     important: bool
     flagged: bool
     has_attachments: bool
+    conversation_id: str = ""  # the thread it's in
     headers: dict[str, str] = field(default_factory=dict)  # lower-cased names; only when asked for
 
 
@@ -60,6 +61,7 @@ def _message(data: dict) -> Message:
         important=data.get("importance") == "high",
         flagged=(data.get("flag") or {}).get("flagStatus") == "flagged",
         has_attachments=bool(data.get("hasAttachments")),
+        conversation_id=data.get("conversationId", ""),
         headers=headers,
     )
 
@@ -104,7 +106,8 @@ class Graph:
                 wait = WINDOW - (now - self._sent[0]) + 0.05
             time.sleep(wait)
 
-    def _call(self, method: str, url: str, cost: int = 1, **kwargs) -> dict:
+    def _call(self, method: str, url: str, cost: int = 1, raw: bool = False, **kwargs):
+        """The JSON answer, or with raw=True the body's bytes."""
         if not url.startswith("https://"):
             url = f"{GRAPH}{url}"
         for attempt in range(RETRIES):
@@ -133,6 +136,8 @@ class Graph:
                     raise RuntimeError("Your Outlook connection doesn't allow this. Ask the project's builder to check "
                                        "the app's API permissions and admin consent, then reconnect Outlook.")
                 raise RuntimeError(f"Outlook refused this request: {message.rstrip('.') or code or resp.status_code}.")
+            if raw:
+                return resp.content
             return resp.json() if resp.content else {}
         raise RuntimeError("Outlook kept failing. Try again in a minute.")
 
@@ -161,6 +166,16 @@ class Graph:
         if headers and found and all("internetMessageHeaders" not in m for m in found):
             found = self._with_headers([m["id"] for m in found])
         return [_message(m) for m in found]
+
+    def mime(self, message_id: str) -> bytes:
+        """The whole message as it arrived (RFC 822, what a .eml file holds), attachments included."""
+        return self._call("GET", f"/me/messages/{message_id}/$value", raw=True)
+
+    def mimes(self, ids: list[str]):
+        """Each message's MIME, in order. Fetched a few at a time, so only those few are held in memory at once."""
+        with ThreadPoolExecutor(max_workers=CONCURRENCY) as pool:
+            for start in range(0, len(ids), CONCURRENCY):
+                yield from pool.map(self.mime, ids[start:start + CONCURRENCY])
 
     def _with_headers(self, ids: list[str]) -> list[dict]:
         """Fetches each message with its headers, when the list didn't include them."""

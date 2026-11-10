@@ -6,8 +6,8 @@ from typing import Literal
 import requests
 
 from callables import Next
-from graph_api import SKIP_FOLDERS, Graph, Message, check_address, from_sender, parse_mailto, since, unsubscribe_options
-from inbox import archive_from_sender, mail, outlook
+from microsoft.outlook.graph_api import SKIP_FOLDERS, Graph, Message, check_address, from_sender, parse_mailto, since, unsubscribe_options
+from microsoft.outlook.inbox import archive_from_sender, mail, outlook
 
 SCAN_LIMIT = 2000
 ALL_MAIL = "/me/messages"  # every folder; sent, drafts, deleted and junk are left out below
