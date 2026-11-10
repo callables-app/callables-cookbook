@@ -5,7 +5,8 @@ from datetime import datetime, timedelta, timezone
 from callables import Connection, Group, Next
 from google.gmail.gmail_api import Gmail, check_address
 
-google = Connection("google", provider="google", scopes=["gmail.modify"])
+# gmail.settings.basic is only for "Set my Gmail signature"; drop it if you don't deploy that
+google = Connection("google", provider="google", scopes=["gmail.modify", "gmail.settings.basic"])
 
 gmail = Group("gmail", title="Gmail", description="Work with your own Gmail inbox", connections=[google])
 

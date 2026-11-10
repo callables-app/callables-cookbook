@@ -167,6 +167,10 @@ class Graph:
             found = self._with_headers([m["id"] for m in found])
         return [_message(m) for m in found]
 
+    def me(self, fields: str) -> dict:
+        """The signed-in person's profile: the fields asked for, those their organization has filled in."""
+        return self._call("GET", "/me", params={"$select": fields})
+
     def mime(self, message_id: str) -> bytes:
         """The whole message as it arrived (RFC 822, what a .eml file holds), attachments included."""
         return self._call("GET", f"/me/messages/{message_id}/$value", raw=True)

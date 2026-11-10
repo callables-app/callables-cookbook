@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from email.message import EmailMessage
 from email.utils import parseaddr
-from urllib.parse import parse_qs, unquote, urlsplit
+from urllib.parse import parse_qs, quote, unquote, urlsplit
 
 import requests
 
@@ -45,7 +45,9 @@ def _cost(method: str, path: str) -> int:
         return 100
     if path == "/messages/batchModify":
         return 50
-    if path.startswith("/labels/"):
+    if path.startswith("/settings/sendAs/") and method in ("PATCH", "PUT"):
+        return 100
+    if path.startswith("/labels/") or path.startswith("/settings/"):
         return 1
     return 5  # messages.list, messages.get, messages.trash
 
@@ -99,8 +101,8 @@ class Gmail:
                     raise RuntimeError("Gmail's rate limit for your account was hit and didn't clear after waiting. "
                                        "Wait a minute and run it again, or use a shorter time range.")
                 if "insufficient" in (reason + message).lower():
-                    raise RuntimeError("Your Google connection doesn't include Gmail access. Disconnect Google under "
-                                       "Connections, connect again, and tick the Gmail box on Google's screen.")
+                    raise RuntimeError("Your Google connection is missing a Gmail permission this needs. Disconnect "
+                                       "Google under Connections, connect again, and tick every box on Google's screen.")
                 raise RuntimeError(f"Google refused this request: {message.rstrip('.') or 'permission denied'}.")
             if resp.status_code >= 500 and attempt < RETRIES - 1:
                 time.sleep(min(30, 2 ** attempt + random.random()))
@@ -161,6 +163,15 @@ class Gmail:
         """Moves messages to Trash, where Gmail keeps them for 30 days before deleting them."""
         with ThreadPoolExecutor(max_workers=8) as pool:
             list(pool.map(lambda i: self._call("POST", f"/messages/{i}/trash"), ids))
+
+    def send_as(self) -> dict:
+        """Your main address's "send as" settings: sendAsEmail, displayName, signature (HTML)..."""
+        addresses = self._call("GET", "/settings/sendAs").get("sendAs", [])
+        return next((a for a in addresses if a.get("isPrimary")), addresses[0] if addresses else {})
+
+    def set_signature(self, address: str, signature: str) -> dict:
+        """Replaces the signature Gmail adds for `address`, one of your "send as" addresses. Needs gmail.settings.basic."""
+        return self._call("PATCH", f"/settings/sendAs/{quote(address)}", json={"signature": signature})
 
     def send(self, to: str, subject: str, body: str) -> None:
         msg = EmailMessage()

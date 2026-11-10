@@ -6,9 +6,9 @@ The whole cookbook deploys as **one project**. Folders are grouped by vendor and
 
 | Folder | What's in it |
 |---|---|
-| [`google/gmail/`](google/gmail/) | Your own Gmail inbox: summaries, top senders, bulk archive, subscriptions and unsubscribe. Each person uses their own account |
+| [`google/gmail/`](google/gmail/) | Your own Gmail inbox: summaries, top senders, bulk archive, subscriptions, unsubscribe, and setting your Gmail signature to the company's. Each person uses their own account |
 | [`google/drive/`](google/drive/) | Google Drive automations (coming) |
-| [`microsoft/outlook/`](microsoft/outlook/) | The Gmail automations for your own Outlook (Microsoft 365) mailbox, plus exporting attachments as a zip per thread |
+| [`microsoft/outlook/`](microsoft/outlook/) | The same inbox automations for your own Outlook (Microsoft 365) mailbox, plus exporting attachments as a zip per thread and making a company email signature |
 | [`microsoft/teams/`](microsoft/teams/) | Microsoft Teams automations (coming) |
 | [`salesforce/`](salesforce/) | Salesforce automations (coming) |
 | [`recipes/`](recipes/) | Jobs across platforms, such as receipts from your inbox into your accounting (coming) |
@@ -19,6 +19,7 @@ The whole cookbook deploys as **one project**. Folders are grouped by vendor and
     google/gmail/inbox.py            callables, plus the Gmail connection and group
     microsoft/outlook/graph_api.py
     microsoft/outlook/inbox.py
+    brand/signature.py               the company's email signature, shared by Gmail and Outlook
     recipes/<job>.py                 imports from google/ and microsoft/ as it needs
     requirements.txt                 one list for everything
 

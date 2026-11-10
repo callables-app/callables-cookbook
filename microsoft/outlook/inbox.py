@@ -11,7 +11,7 @@ from microsoft.outlook.graph_api import Graph, from_sender, since
 outlook = Connection(
     "outlook",
     provider="microsoft",
-    scopes=["Mail.ReadWrite", "Mail.Send"],
+    scopes=["Mail.ReadWrite", "Mail.Send", "User.Read"],  # User.Read: your profile, for the signature
     client_id=Secret("MS_CLIENT_ID"),
     client_secret=Secret("MS_CLIENT_SECRET"),
     values={"tenant": Secret("MS_TENANT_ID")},

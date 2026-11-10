@@ -8,12 +8,13 @@ Automations that work on the inbox of **whoever runs them** (for Microsoft 365, 
 | **Recent senders** | Who has emailed you most lately, with unread counts. Each row offers **Archive their emails** |
 | **Archive emails from a sender** | Archives every inbox email from one address. Dry run is on by default, so you see what would move first |
 | **Subscriptions** | Mailing lists that emailed you in the last N days (found by their `List-Unsubscribe` header), busiest first, with how much you read. Each row offers **Unsubscribe** |
+| **Set my Gmail signature** | Sets your Gmail signature to the company's (Callables' style, with its logo) through the Gmail API: nothing to paste. Name and address come from Gmail; add job title, department and phone in the form. Classic or compact. Your old signature comes back as a download, and you can turn off saving to only preview |
 | **Unsubscribe** | Leaves a list the best way it supports: one-click (RFC 8058), else an unsubscribe email sent from your Gmail, else the link for you to open. Then optionally archives or trashes everything it sent you |
 
 The connection is declared once in `inbox.py` and shared by the whole group:
 
 ```python
-google = Connection("google", provider="google", scopes=["gmail.modify"])
+google = Connection("google", provider="google", scopes=["gmail.modify", "gmail.settings.basic"])
 gmail = Group("gmail", title="Gmail", connections=[google])
 ```
 
@@ -25,7 +26,7 @@ Follow the [Google connector guide](https://callables.app/connectors/google). In
 
 1. In the [Google Cloud console](https://console.cloud.google.com/), create a project and enable the **Gmail API**.
 2. In **Google Auth Platform**, choose the audience: **Internal** if you're on Google Workspace and only your organization will use it. Otherwise **External**, with yourself and your testers as **Test users**.
-3. Add the scope `gmail.modify`.
+3. Add the scopes `gmail.modify` and `gmail.settings.basic` (the second is only for the signature; drop it from `inbox.py` too if you don't want that).
 4. Create a **Web application** client with the redirect URI `https://callables.app/connections/callback`, and copy the client ID and secret.
 
 `gmail.modify` is a restricted scope. While an External app is in **Testing**, Google expires sign-ins after 7 days, so people have to reconnect weekly. An **Internal** app doesn't have that limit.
@@ -55,3 +56,8 @@ Open **Summarize my inbox**. It asks you to **Connect Google**, sends you to Goo
        call gmail subscriptions
 
 `call connect google` opens Google's sign-in (tick every box). It keeps the tokens in your user config folder and refreshes them, so you don't sign in again. `call disconnect` forgets them.
+
+## Notes
+
+- **Set my Gmail signature** uses the same template as Outlook's **Make my email signature**: `COMPANY` in [`brand/signature.py`](../../brand/signature.py) holds the name, tagline, logo, colours and website. Change them once and both change. The logo must be a square PNG or JPG at a public address.
+- If you connected Google before `gmail.settings.basic` was added, Callables asks you to reconnect once, to approve the new permission.
