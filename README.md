@@ -10,6 +10,7 @@ The whole cookbook deploys as **one project**. Folders are grouped by vendor and
 | [`google/gmail/`](google/gmail/) | Your own Gmail inbox: summaries, top senders, bulk archive, subscriptions, unsubscribe, and setting your Gmail signature to the company's. Each person uses their own account |
 | [`google/drive/`](google/drive/) | Google Drive automations (coming) |
 | [`microsoft/outlook/`](microsoft/outlook/) | The same inbox automations for your own Outlook (Microsoft 365) mailbox, plus exporting attachments as a zip per thread and making a company email signature |
+| [`invoices/`](invoices/) | Finding the invoices in your Gmail or Outlook: Claude reads the attachments, you get a CSV and a zip of the files. Shared by both mail providers' **Find invoices** |
 | [`microsoft/teams/`](microsoft/teams/) | Microsoft Teams automations (coming) |
 | [`revenuecat/`](revenuecat/) | Your subscription numbers live: the overview, any dashboard chart split and filtered, revenue, customer lookups, and granting or revoking promotional access (dry run first). With the [MCP server](https://callables.app/docs/mcp) it's a RevenueCat MCP |
 | [`salesforce/`](salesforce/) | Salesforce automations (coming) |
@@ -24,6 +25,7 @@ The whole cookbook deploys as **one project**. Folders are grouped by vendor and
     microsoft/outlook/graph_api.py
     microsoft/outlook/inbox.py
     brand/signature.py               the company's email signature, shared by Gmail and Outlook
+    invoices/                        reading invoices out of email attachments, shared by Gmail and Outlook
     recipes/<job>.py                 imports from google/ and microsoft/ as it needs
     requirements.txt                 one list for everything
 

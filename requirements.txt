@@ -4,3 +4,5 @@ requests>=2.32
 # Apple Ads signs in with a private key (ES256 JWT)
 PyJWT>=2.9
 cryptography>=43
+# Find invoices: Claude reads the attachments
+anthropic>=2.8

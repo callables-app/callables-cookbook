@@ -143,6 +143,19 @@ class Gmail:
             headers=headers,
         )
 
+    def raw(self, message_id: str) -> tuple[bytes, datetime]:
+        """The whole message as it arrived (RFC 822, what a .eml file holds, attachments included), and when."""
+        data = self._call("GET", f"/messages/{message_id}", params={"format": "raw"})
+        received = datetime.fromtimestamp(int(data.get("internalDate", 0)) / 1000, tz=timezone.utc)
+        return base64.urlsafe_b64decode(data["raw"] + "=" * (-len(data["raw"]) % 4)), received
+
+    def raws(self, ids: list[str]):
+        """Each message's raw MIME and arrival time, in order. Fetched a few at a time, so only those few are held in
+        memory at once, and a caller that stops early doesn't fetch the rest."""
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            for start in range(0, len(ids), 4):
+                yield from pool.map(self.raw, ids[start:start + 4])
+
     def label(self, label_id: str) -> dict:
         """A label's counts: messagesTotal, messagesUnread, threadsTotal, threadsUnread."""
         return self._call("GET", f"/labels/{label_id}")
