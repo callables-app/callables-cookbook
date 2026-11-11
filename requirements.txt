@@ -1,3 +1,6 @@
 # The whole cookbook deploys as one project, so every folder shares these.
 # The Callables SDK is installed by the platform; don't list it here.
 requests>=2.32
+# Apple Ads signs in with a private key (ES256 JWT)
+PyJWT>=2.9
+cryptography>=43

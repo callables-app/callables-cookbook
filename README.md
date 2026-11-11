@@ -6,6 +6,7 @@ The whole cookbook deploys as **one project**. Folders are grouped by vendor and
 
 | Folder | What's in it |
 |---|---|
+| [`apple/ads/`](apple/ads/) | Your Apple Ads account, live: campaign, ad group, keyword and search-term reviews, keyword rankings by CPA, and bid, keyword, negative and budget changes (dry run first). With the [MCP server](https://callables.app/docs/mcp) it's an Apple Ads MCP for Claude or ChatGPT |
 | [`google/gmail/`](google/gmail/) | Your own Gmail inbox: summaries, top senders, bulk archive, subscriptions, unsubscribe, and setting your Gmail signature to the company's. Each person uses their own account |
 | [`google/drive/`](google/drive/) | Google Drive automations (coming) |
 | [`microsoft/outlook/`](microsoft/outlook/) | The same inbox automations for your own Outlook (Microsoft 365) mailbox, plus exporting attachments as a zip per thread and making a company email signature |
@@ -15,7 +16,9 @@ The whole cookbook deploys as **one project**. Folders are grouped by vendor and
 
 ## Layout
 
-    google/gmail/gmail_api.py        an API client: no callables in it, so any folder can import it
+    apple/ads/apple_ads_api.py       an API client: no callables in it, so any folder can import it
+    apple/ads/review.py              callables (tables), using the group from apple/ads/group.py
+    google/gmail/gmail_api.py
     google/gmail/inbox.py            callables, plus the Gmail connection and group
     microsoft/outlook/graph_api.py
     microsoft/outlook/inbox.py
