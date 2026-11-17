@@ -1,0 +1,2 @@
+# Build this recipe on its own: set the project's Folder to recipes/seo. These folders come along at their repo paths.
+include = ["providers/google/search_console", "providers/microsoft/bing", "providers/umami"]

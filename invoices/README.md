@@ -1,6 +1,6 @@
 # Invoices
 
-Find the invoices in your inbox without opening every email. **Find invoices**, in both [Gmail](../google/gmail/) and [Outlook](../microsoft/outlook/), looks at every PDF and image attached to your emails from the last N days. Claude decides which ones are invoices or receipts and reads their details. You get two downloads:
+Find the invoices in your inbox without opening every email. **Find invoices**, in both [Gmail](../providers/google/gmail/) and [Outlook](../providers/microsoft/outlook/), looks at every PDF and image attached to your emails from the last N days. Claude decides which ones are invoices or receipts and reads their details. You get two downloads:
 
 - **`invoices.csv`**: one row per invoice, newest first, with invoice date, vendor, invoice number, total, tax, subtotal, currency, due date, who it's billed to, what it's for, the file's name in the zip, and the email it came in. It opens cleanly in Excel and Google Sheets.
 - **`invoices.zip`**: every invoice file, renamed so they sort by date and say whose they are (`2026-11-03 Acme Ltd INV-1042.pdf`), plus the CSV.
@@ -12,8 +12,8 @@ Hand both to your accountant at the end of the month, or ask an assistant connec
     invoices/attachments.py    pulls the PDFs and images out of an email's raw MIME; skips logos, zips and oversize files
     invoices/reader.py         asks Claude whether an attachment is an invoice, and for its fields
     invoices/report.py         the whole job: read the attachments, write the CSV and the zip
-    google/gmail/invoices.py   Gmail's Find invoices: searches for emails with attachments, hands over their MIME
-    microsoft/outlook/invoices.py   the same for Outlook
+    providers/google/gmail/invoices.py   Gmail's Find invoices: searches for emails with attachments, hands over their MIME
+    providers/microsoft/outlook/invoices.py   the same for Outlook
 
 None of `invoices/` knows about Gmail or Outlook. Each provider fetches its own emails as raw MIME and calls `invoices.report.find()`, so adding another mail provider is a few lines.
 
@@ -23,7 +23,7 @@ The same file sent twice, in a reply or a reminder, is read once.
 
 ## Set it up
 
-1. Set up the [Gmail](../google/gmail/README.md) or [Outlook](../microsoft/outlook/README.md) connection, if you haven't.
+1. Set up the [Gmail](../providers/google/gmail/README.md) or [Outlook](../providers/microsoft/outlook/README.md) connection, if you haven't.
 2. Get an API key at [console.anthropic.com](https://console.anthropic.com/) and set it as the project secret `ANTHROPIC_API_KEY`.
 3. Run **Find invoices**.
 

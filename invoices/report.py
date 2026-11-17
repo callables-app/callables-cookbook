@@ -1,5 +1,5 @@
 """The whole job, once each provider has fetched its emails: read the attachments, then write the CSV and the zip.
-No callables: google/gmail/invoices.py and microsoft/outlook/invoices.py call find() with their own emails."""
+No callables: providers/google/gmail/invoices.py and providers/microsoft/outlook/invoices.py call find() with their own emails."""
 import csv
 import io
 import tempfile

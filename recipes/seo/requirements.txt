@@ -1,0 +1,2 @@
+# Used when the recipe is deployed on its own (Folder = recipes/seo). The Callables SDK is installed by the platform.
+requests>=2.32
