@@ -11,6 +11,7 @@ Deploy the whole cookbook as one project, or [just one recipe](#deploy-just-one-
 | Recipe | What it does |
 |---|---|
 | [`recipes/seo/`](recipes/seo/) | **SEO toolkit**: Google Search Console, Bing Webmaster Tools and Umami together. A search scorecard, the pages to fix next, a full report on one page, and which pages Google or Bing haven't indexed |
+| [`recipes/app_growth/`](recipes/app_growth/) | **App growth**: App Store Connect and Apple Ads together. Downloads from ads vs organic, every custom product page compared in ads, and keyword ideas for your listing from the searches ads already win |
 | [`invoices/`](invoices/) | Finding the invoices in your Gmail or Outlook: Claude reads the attachments, you get a CSV and a zip of the files. Shared by both mail providers' **Find invoices** |
 
 ## Providers
@@ -18,6 +19,7 @@ Deploy the whole cookbook as one project, or [just one recipe](#deploy-just-one-
 | Folder | What's in it |
 |---|---|
 | [`providers/apple/ads/`](providers/apple/ads/) | Your Apple Ads account, live: campaign, ad group, keyword and search-term reviews, keyword rankings by CPA, and bid, keyword, negative and budget changes (dry run first). With the [MCP server](https://callables.app/docs/mcp) it's an Apple Ads MCP for Claude or ChatGPT |
+| [`providers/apple/app_store_connect/`](providers/apple/app_store_connect/) | Your App Store listing, custom product pages, reviews and downloads, live: change keywords, subtitle and promotional text, make and edit product pages, and submit them for review (dry run first). An App Store Connect MCP with the [MCP server](https://callables.app/docs/mcp) |
 | [`providers/google/gmail/`](providers/google/gmail/) | Your own Gmail inbox: summaries, top senders, bulk archive, subscriptions, unsubscribe, and setting your Gmail signature to the company's. Each person uses their own account |
 | [`providers/google/search_console/`](providers/google/search_console/) | Your site's Google search data, live: queries, pages, what changed, quick wins and URL inspection. Each person uses their own Google account |
 | [`providers/google/drive/`](providers/google/drive/) | Google Drive automations (coming) |

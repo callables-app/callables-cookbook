@@ -139,6 +139,49 @@ class AppleAds:
     def ad_group(self, campaign_id: int, ad_group_id: int) -> dict:
         return self.get(f"/campaigns/{campaign_id}/adgroups/{ad_group_id}")["data"]
 
+    def app_id(self, campaigns: list[dict] | None = None) -> int:
+        """The App Store id (adamId) the campaigns advertise. Raises if they advertise several apps."""
+        apps = {c["adamId"] for c in (campaigns if campaigns is not None else self.campaigns()) if c.get("adamId")}
+        if not apps:
+            raise RuntimeError("No campaign says which app it advertises: create a campaign in Apple Ads first.")
+        if len(apps) > 1:
+            raise RuntimeError(f"These campaigns advertise several apps ({', '.join(map(str, sorted(apps)))}): "
+                               "pick a campaign of the right app.")
+        return apps.pop()
+
+    def product_pages(self, adam_id: int) -> list[dict]:
+        """The app's custom product pages, as Apple Ads sees them (id, name, state)."""
+        return self.get(f"/apps/{adam_id}/product-pages").get("data", [])
+
+    def product_page(self, adam_id: int, product_page_id: str) -> dict:
+        page = next((p for p in self.product_pages(adam_id) if p.get("id") == product_page_id), None)
+        if not page:
+            raise ValueError(f"{product_page_id} isn't one of this app's custom product pages. Run Creatives or "
+                             "App Store Connect's Custom product pages for the ids.")
+        return page
+
+    def ads(self, campaign_id: int, ad_group_id: int) -> list[dict]:
+        return self.paged(f"/campaigns/{campaign_id}/adgroups/{ad_group_id}/ads")
+
+    def creative(self, creative_id) -> dict:
+        return self.get(f"/creatives/{creative_id}").get("data", {}) if creative_id else {}
+
+    def page_creative(self, adam_id: int, product_page_id: str, name: str) -> dict:
+        """The Apple Ads creative for a custom product page, created if the account doesn't have one yet."""
+        found = next((c for c in self.paged("/creatives")
+                      if c.get("productPageId") == product_page_id and c.get("adamId") == adam_id), None)
+        return found or self.post("/creatives", {"adamId": adam_id, "name": name, "type": "CUSTOM_PRODUCT_PAGE",
+                                                 "productPageId": product_page_id}).get("data", {})
+
+    def download(self, uri: str) -> bytes:
+        """A report file from Apple's download link (signed, or needing this sign-in)."""
+        resp = requests.get(uri, timeout=120)
+        if not resp.ok:
+            resp = requests.get(uri, timeout=120, headers={"Authorization": f"Bearer {self._token}",
+                                                          "X-AP-Context": f"orgId={self.org_id}"})
+        resp.raise_for_status()
+        return resp.content
+
     def keywords(self, campaign_id: int, ad_group_id: int) -> list[dict]:
         return self.paged(f"/campaigns/{campaign_id}/adgroups/{ad_group_id}/targetingkeywords")
 
@@ -182,3 +225,69 @@ class AppleAds:
             if len(page) < PAGE:
                 return rows
             offset += PAGE
+
+
+# ── ads and their product pages (for recipes) ────────────────────────────────
+
+def ads_with_pages(start: date, end: date, product_page_ids: list[str] | None = None,
+                   api: "AppleAds | None" = None) -> list[dict]:
+    """One row per ad in every campaign (paused ones too), with the product page it runs and its results over
+    start..end, biggest spend first.
+
+    Rows: campaign, campaign_status, ad_group, ad, ad_status, product_page (name), product_page_id ("" for the
+    default product page), creative_type, spend, impressions, taps, installs, ttr, cvr, cpt, cpa, and campaign_id,
+    ad_group_id, ad_id, creative_id, adam_id. product_page_ids keeps only ads running those custom pages.
+    """
+    from providers.apple.ads.metrics import stats
+
+    api = api or AppleAds()
+    campaigns = api.campaigns()
+    wanted = {p.strip() for p in product_page_ids or [] if p.strip()}
+    names: dict = {}
+    for adam in {c["adamId"] for c in campaigns if c.get("adamId")}:
+        try:
+            names.update({p.get("id"): p.get("name") for p in api.product_pages(adam)})
+        except RuntimeError:
+            pass
+    creatives: dict = {}
+    rows = []
+    for c in campaigns:
+        try:
+            report = {r["metadata"].get("adId"): r for r in api.report(f"/reports/campaigns/{c['id']}/ads", start, end)}
+        except RuntimeError:
+            report = {}
+        for g in api.ad_groups(c["id"]):
+            try:
+                ads = api.ads(c["id"], g["id"])
+            except RuntimeError:
+                ads = []
+            for ad in ads:
+                cid = ad.get("creativeId")
+                if cid not in creatives:
+                    try:
+                        creatives[cid] = api.creative(cid)
+                    except RuntimeError:
+                        creatives[cid] = {}
+                cr = creatives[cid]
+                row = report.get(ad.get("id")) or {}
+                page_id = cr.get("productPageId") or row.get("metadata", {}).get("productPageId") or ""
+                if wanted and page_id not in wanted:
+                    continue
+                rows.append({
+                    "campaign": c["name"],
+                    "campaign_status": c.get("status"),
+                    "ad_group": g["name"],
+                    "ad": ad.get("name"),
+                    "ad_status": ad.get("status"),
+                    "product_page": names.get(page_id) or cr.get("name") or ("Default product page" if not page_id
+                                                                             else None),
+                    "product_page_id": page_id,
+                    "creative_type": cr.get("type") or ad.get("creativeType"),
+                    **stats(row.get("total")),
+                    "campaign_id": c["id"],
+                    "ad_group_id": g["id"],
+                    "ad_id": ad.get("id"),
+                    "creative_id": cid,
+                    "adam_id": c.get("adamId"),
+                })
+    return sorted(rows, key=lambda r: -r["spend"])

@@ -1,0 +1,2 @@
+# Build this recipe on its own: set the project's Folder to recipes/app_growth. These folders come along at their repo paths.
+include = ["providers/apple/ads", "providers/apple/app_store_connect"]

@@ -1,0 +1,7 @@
+# Used when the recipe is deployed on its own (Folder = recipes/app_growth). The Callables SDK is installed by the platform.
+requests>=2.32
+# Apple Ads and App Store Connect sign in with private keys (ES256 JWTs)
+PyJWT>=2.9
+cryptography>=43
+# App Store Connect: header and search images are flattened to opaque PNGs
+Pillow>=10
