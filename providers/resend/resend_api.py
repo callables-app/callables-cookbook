@@ -16,6 +16,9 @@ API = "https://api.resend.com"
 SECRETS = ["RESEND_API_KEY", "RESEND_FROM"]
 UNSUBSCRIBE = "{{{RESEND_UNSUBSCRIBE_URL}}}"
 VARIABLE = re.compile(r"\{\{\{\s*([A-Za-z0-9_.]+)\s*(?:\|([^}]*))?\}\}\}")
+# Optional sections: <!--if:BLOG_URL-->...<!--endif:BLOG_URL--> is dropped when BLOG_URL is empty.
+# <!--if:LINKEDIN_URL,X_URL--> keeps the section when any of them is set. Resend's templates have no conditionals.
+SECTION = re.compile(r"<!--\s*if:\s*([A-Za-z0-9_,\s]+?)\s*-->(.*?)<!--\s*endif:\s*\1\s*-->", re.S)
 # Template placeholders Resend fills for single emails, spelled the way broadcasts expect them
 CONTACT = {"FIRST_NAME": "contact.first_name", "LAST_NAME": "contact.last_name", "EMAIL": "contact.email"}
 
@@ -39,9 +42,24 @@ def parse_variables(text: str | None) -> dict[str, str]:
 def render(text: str, declared: list[dict], values: dict[str, str], as_html: bool = False) -> tuple[str, list[str]]:
     """The template's {{{KEY}}} variables filled from `values`, else their fallback. Returns the text and the keys
     that have neither (left in place, so the caller can refuse to send). as_html escapes the values and turns line
-    breaks into <br>, so a post's text can't break the email's HTML."""
+    breaks into <br>, so a post's text can't break the email's HTML. Optional sections (see SECTION) whose variables
+    are all empty are removed first, so their variables don't count as missing."""
     defaults = {v["key"]: v.get("fallback_value") for v in declared or []}
     missing: list[str] = []
+
+    def section(m: re.Match) -> str:
+        keys = [k.strip() for k in m.group(1).split(",") if k.strip()]
+        keep = any(values.get(k) or defaults.get(k) for k in keys)
+        return m.group(2) if keep else ""
+
+    text = text or ""
+    while True:  # nested sections: the outer one goes first, then what's left inside it
+        new = SECTION.sub(section, text)
+        if new == text:
+            break
+        text = new
+    if not as_html:
+        text = re.sub(r"\n{3,}", "\n\n", text)  # removed sections leave blank lines in plain text
 
     def fill(m: re.Match) -> str:
         key, fallback = m.group(1), m.group(2)
@@ -59,7 +77,7 @@ def render(text: str, declared: list[dict], values: dict[str, str], as_html: boo
             return m.group(0)
         return html_lib.escape(str(value)).replace("\n", "<br>") if as_html else str(value)
 
-    return VARIABLE.sub(fill, text or ""), sorted(set(missing))
+    return VARIABLE.sub(fill, text), sorted(set(missing))
 
 
 def with_unsubscribe(html: str) -> str:

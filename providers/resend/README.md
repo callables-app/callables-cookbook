@@ -13,6 +13,16 @@ It's part of the [Announce](../../recipes/announce/) recipe, which posts to Link
 
 Resend's API can't send a broadcast from a template; only single emails can use one. So **Send email to a segment** fetches the template, fills its variables, and sends the result as the broadcast. Per-person placeholders like `{{{contact.first_name|there}}}` and the unsubscribe link are left for Resend to fill for each contact. If the template has no unsubscribe link, a small one is added at the bottom.
 
+Resend's templates have no if/else, so the run adds optional sections. A section is removed when its variable is empty, so a template can include a block only when you pass a value for it:
+
+```html
+<!--if:BLOG_URL-->
+  <p><a href="{{{BLOG_URL}}}">{{{BLOG_TITLE|Read the post}}}</a></p>
+<!--endif:BLOG_URL-->
+```
+
+`<!--if:LINKEDIN_URL,X_URL-->` keeps a section when any of the variables is set. Sections can be nested, and variables inside a removed section don't need values. They work in a template's HTML and plain text, but only for broadcasts sent through this callable or a recipe that uses it. Resend itself treats them as plain comments.
+
 ## Set it up
 
 1. In Resend, verify the domain you send from (**Domains**).

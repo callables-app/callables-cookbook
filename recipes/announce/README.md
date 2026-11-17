@@ -67,7 +67,13 @@ In Resend, open **Templates** and make one with the variables `LINKEDIN_URL`, `X
 <p><a href="{{{RESEND_UNSUBSCRIBE_URL}}}">Unsubscribe</a></p>
 ```
 
-Give `LINKEDIN_URL` and `X_URL` a fallback (such as your profile links) if you sometimes post to only one. **Templates** in the Resend group lists your templates and the variables each takes.
+To link a blog post, pass `BLOG_URL=https://...; BLOG_TITLE=...` in **Variables** and wrap that part of the template in an optional section, which is dropped when there's no blog post (see [Resend](../../providers/resend/)):
+
+```html
+<!--if:BLOG_URL--><p>On the blog: <a href="{{{BLOG_URL}}}">{{{BLOG_TITLE|Read the post}}}</a></p><!--endif:BLOG_URL-->
+```
+
+Wrap the LinkedIn and X links the same way (`<!--if:X_URL-->...<!--endif:X_URL-->`), so a network you skip doesn't leave an empty link. **Templates** in the Resend group lists your templates and the variables each takes.
 
 ## Run locally
 
